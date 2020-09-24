@@ -3,11 +3,14 @@ var passport = require('passport');
 
 var BearerStrategy = require("passport-azure-ad").BearerStrategy;
 
+const tenantID = "2bb82c64-2eb1-43f7-8862-fdc1d2333b50";
+const clientID = "c49d3833-ee3c-4bfa-8fa8-d7566b7ec0fd";
+
 var options =  {
-  identityMetadata: "https://login.microsoftonline.com/<tenantid>/v2.0/.well-known/openid-configuration",
-  clientID: "<clientid>",
-  issuer: "https://sts.windows.net/<tenantid>/",
-  audience: "<appiduri>",
+  identityMetadata: `https://login.microsoftonline.com/${tenantID}/v2.0/.well-known/openid-configuration`,
+  clientID: clientID,
+  issuer: `https://sts.windows.net/${tenantID}/`,
+  audience: "http://customappsso/1a2607b0-c1c4-45db-b094-253173f3cef1",
   loggingLevel: "info",
   passReqToCallback: false
 };
@@ -38,11 +41,24 @@ app.use(function(req, res, next) {
 app.get(
   "/api",
   passport.authenticate("oauth-bearer", { session: false }),
-  function(req, res) {
+  function (req, res) {
     var claims = req.authInfo;
     console.log("User info: ", req.user);
     console.log("Validated claims: ", claims);
     res.status(200).json({ name: claims["name"] });
+  }
+);
+app.get(
+  "/callback",
+  function (req, res) {
+    console.log("We have a callback", { query: req.query });
+    var { error = "" } = req.query;
+    if (error) {
+      console.error(error);
+    }
+    res.status(200).json(
+      { ...req.query }
+    );
   }
 );
 
